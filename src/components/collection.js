@@ -1,6 +1,5 @@
 import html from "./collection.html";
 import axios from "axios";
-import json from "./work.json";
 import PubSub from "../core/pubsub";
 
 const events = new PubSub();
@@ -10,15 +9,15 @@ const collection = {
     template: html,
     data () {
         return {
-            collectionUrl: "https://hgor-admin.squarespace.com/work?format=json",
             currentFilter: "All",
-            categories: [],
+            fullUrl: "https://hgor-admin.squarespace.com/work?format=json",
             items: [],
-            currentItems: [],
             scrollHeight: 0,
+            categories: [],
             disableScroll: false,
             scrollBottom: false,
             pagination: {},
+            isLoading: false,
             lifecycle: {
                 appLoaded: false
             }
@@ -105,37 +104,7 @@ const collection = {
             }
 
             return className;
-        },
-        currentList () {
-            /* this is the main rendered list outputted to
-            the DOM target area */
-
-            //clone the array
-            let array = this.items.slice(0);
-
-            if (this.search.isActive) {
-                //store cloned list of items in category
-                array = array.slice(0);
-
-                //filter the array from search criteria
-                const tag = this.search.category;
-
-                array = array.filter((item) => {
-                    let match = false;
-
-                    if (item.tags && item.tags.indexOf(tag) !== -1) {
-                        match = item;
-                    }
-
-                    return match;
-                });
-            }
-
-            //paginate the array
-            array = this.paginate(array);
-
-            return array;
-        },
+        }
     },
     methods: {
         /**
@@ -159,6 +128,24 @@ const collection = {
         cleanupScrollEvents () {
             window.removeEventListener("load", this.executeScrollFunctions);
             window.removeEventListener("scroll", this.executeScrollFunctions);
+        },
+
+        /**
+         * A simple on / off loader. The div has been placed outside the
+         * Vue component.
+         *
+         * @param  {Bool} loaderState
+         * @memberof collectionList
+         * @name progressLoaderIsActive
+         * @private
+         */
+
+        progressLoaderIsActive (loaderState) {
+            if (loaderState) {
+                document.querySelector(".progress-loader").classList.remove("load-complete");
+            } else {
+                document.querySelector(".progress-loader").classList.add("load-complete");
+            }
         },
 
         /**
@@ -186,10 +173,6 @@ const collection = {
                 top: scrollY,
                 left: 0
             });
-        },
-
-        generateHref (filter) {
-            return `/work?category=${filter}`;
         },
 
         paginate (array) {
@@ -234,33 +217,30 @@ const collection = {
         },
 
         filterByCategory (filter) {
-            console.log(filter);
-            //let url = this.fullUrl;
+            let url = this.fullUrl;
 
             this.pagination = false;
 
-            /*            if (filter.filterName !== "All" && filter) {
-                            url = `${this.fullUrl}?category=${filter.filterName}`;
-                        }
+            if (filter.filterName !== "All" && filter) {
+                url = `${this.fullUrl}&category=${filter.filterName}`;
+                console.log({ url });
+            }
 
-                        const request = axios.get(url);
+            const request = axios.get(url);
 
-                        request.then((response) => {
-                                this.items = response.data.items;
+            request.then((response) => {
+                console.log({ navRequest: response });
+                this.items = response.data.items;
 
-                                if (response.data.pagination) {
-                                    this.pagination = response.data.pagination;
-                                    this.scrollBottom = false;
-                                }
-                                this.progressLoaderIsActive(false);
-                            })
-                            .catch((error) => {
-                                console.log(json);
-                                this.categories = json.collection.categories;
-                                this.items = json.items;
-                                this.pagination = json.pagination;
-                                console.log(error);
-                            });*/
+                if (response.data.pagination) {
+                    this.pagination = response.data.pagination;
+                    this.scrollBottom = false;
+                }
+                this.progressLoaderIsActive(false);
+            })
+            .catch((error) => {
+                console.log(error);
+            });
         },
 
         /**
@@ -326,12 +306,19 @@ const collection = {
 
         encodeShareUrl (value) {
             return `${location.pathname}?category=${encodeURIComponent(value)}`;
+        },
+
+        setFilter (filter) {
+            events.emit("filter-set", { filterName: filter });
+        },
+        resetFilters () {
+            events.emit("filter-set", { filterName: "All" });
         }
     },
     mounted () {
+        this.progressLoaderIsActive(true);
         this.checkUrlForFilter();
         this.listenToHistoryLesson();
-
         events.on("filter-set", (e) => {
             this.currentFilter = e.filterName;
             if (!e.popstate) {
@@ -341,28 +328,28 @@ const collection = {
                     history.pushState({ currentFilter: e.filterName }, null, this.encodeShareUrl(e.filterName));
                 }
             }
-            this.filterByCategory(e);
+            this.progressLoaderIsActive(true);
+            this.items = [];
+            setTimeout(() => {
+                this.filterByCategory(e);
+            }, 600);
         });
 
         setTimeout(() => {
             this.bindScrollEvents();
+            this.progressLoaderIsActive(false);
             this.lifecycle.appLoaded = true;
         }, 1200);
 
-        const request = axios.get(this.collectionUrl);
+        const request = axios.get(this.fullUrl);
 
         request.then((response) => {
-                console.log(response);
+                console.log({ firstRequest: response });
                 this.categories = response.data.collection.categories;
                 this.items = response.data.items;
                 this.pagination = response.data.pagination;
             })
             .catch((error) => {
-                console.log(json);
-                this.categories = json.collection.categories;
-                this.items = json.items;
-                this.currentItems = json.items.slice(0);
-                this.pagination = json.pagination;
                 console.log(error);
             });
 

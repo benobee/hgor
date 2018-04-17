@@ -1,11 +1,7 @@
-<div class="app">
+<div class="app" v-bind:class="{ loaded: lifecycle.appLoaded, loading: isLoading }">
     <div class="nav-filters">
-        <div class="nav-item">
-            <a href="/work">All</a>
-        </div>
-        <div class="nav-item" v-for="filter in categories">
-            <a :href="generateHref(filter)">{{filter}}</a>
-        </div>
+        <div class="nav-item" v-on:click="resetFilters">All</div>
+        <div class="nav-item" v-for="filter in categories" v-on:click="setFilter(filter)">{{filter}}</div>
     </div>
     <div class="WorkList-wrapper collection-list">
         <transition-group name="list-complete" tag="div" class="WorkList">
@@ -21,5 +17,6 @@
                 </div>
             </div>
         </transition-group>
+        <div class="loader-bottom"><div class="spinner"></div></div>
     </div>
 </div>
