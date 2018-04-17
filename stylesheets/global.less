@@ -1,0 +1,52 @@
+@mobile: 640px;
+@tablet: 768px;
+
+.nav-filters {
+      display: flex;
+      flex-wrap: wrap;
+      position: fixed;
+      right: 0;
+      margin-right: 2em;
+      margin-left: 2em;
+      background: #FAFAFA;
+      z-index: 99;
+      width: 100%;
+      padding: 1em 0;
+      top: 52px;
+      justify-content: flex-end;
+      @media screen and (max-width: @mobile) {
+          display:none;
+      }
+      .nav-item {
+          cursor: pointer;
+          margin-left: 1em;
+          font-size: 1em;
+          font-weight: 800;
+          transition: opacity 0.3s;
+          &:hover {
+              opacity: 0.6;
+          }
+      }
+  }
+
+  .WorkList {
+      margin-top:300px;
+      display: flex;
+      flex-wrap: wrap;
+      .WorkList-item {
+          flex: 1 1 25em;
+          .WorkList-item-image {
+              .WorkList-item-image-link {
+                  display: flex;
+                  overflow:hidden;
+                  max-height:400px;
+                  img {
+                      width:auto;
+                      max-width:400px;
+                      max-height: 400px;
+                      object-fit: cover;
+                  }
+              }
+          }
+      }
+  }

@@ -1,0 +1,25 @@
+<div class="app">
+    <div class="nav-filters">
+        <div class="nav-item">
+            <a href="/work">All</a>
+        </div>
+        <div class="nav-item" v-for="filter in categories">
+            <a :href="generateHref(filter)">{{filter}}</a>
+        </div>
+    </div>
+    <div class="WorkList-wrapper collection-list">
+        <transition-group name="list-complete" tag="div" class="WorkList">
+            <div class="WorkList-item" v-for="item in items" :data-item-id="item.id" :key="item.id" :class="item | applyItemClasses">
+              <div class="WorkList-item-image">
+                  <a :href="item.fullUrl" class="WorkList-item-image-link">
+                      <img :src="item.assetUrl">
+                  </a>
+              </div>
+              <a :href="item.fullUrl" class="WorkList-item-title" data-content-field="title">{{item.title}}</a>
+                <div class="meta">
+                  <span class="meta-item--categories">{{item.categories.join(", ")}}</span>
+                </div>
+            </div>
+        </transition-group>
+    </div>
+</div>
