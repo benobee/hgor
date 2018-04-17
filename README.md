@@ -19,4 +19,3 @@ Tests whether the node is active in the DOM
 -   `query` **[String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** query selector
 
 Returns **[Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)** DOM Node
-"# hgor" 
