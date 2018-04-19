@@ -10,7 +10,7 @@ const collection = {
     data () {
         return {
             currentFilter: "All",
-            fullUrl: "https://hgor-admin.squarespace.com/work?format=json",
+            fullUrl: "https://hgor-admin.squarespace.com/work",
             items: [],
             scrollHeight: 0,
             categories: [],
@@ -148,6 +148,17 @@ const collection = {
             }
         },
 
+        mapFilters (array) {
+            array = array.map((item) => {
+                return {
+                    isActive: false,
+                    name: item
+                };
+            });
+
+            return array;
+        },
+
         /**
          * Tests whether the collection list is at the bottom or not.
          *
@@ -217,16 +228,23 @@ const collection = {
         },
 
         filterByCategory (filter) {
-            let url = this.fullUrl;
-
             this.pagination = false;
+            const params = {
+                format: "json",
+                nocache: true
+            };
 
             if (filter.filterName !== "All" && filter) {
-                url = `${this.fullUrl}&category=${filter.filterName}`;
-                console.log({ url });
+                params.category = filter.filterName;
+                console.log({ filterParams: params });
             }
 
-            const request = axios.get(url);
+            const request = axios.get(this.fullUrl, {
+                headers: {
+                    "Cache-Control": "no-cache, no-store, must-revalidate"
+                },
+                params
+            });
 
             request.then((response) => {
                 console.log({ navRequest: response });
@@ -309,9 +327,16 @@ const collection = {
         },
 
         setFilter (filter) {
-            events.emit("filter-set", { filterName: filter });
+            this.categories.forEach((item) => {
+                item.isActive = false;
+            });
+            filter.isActive = true;
+            events.emit("filter-set", { filterName: filter.name });
         },
         resetFilters () {
+            this.categories.forEach((item) => {
+                item.isActive = false;
+            });
             events.emit("filter-set", { filterName: "All" });
         }
     },
@@ -341,11 +366,19 @@ const collection = {
             this.lifecycle.appLoaded = true;
         }, 1200);
 
-        const request = axios.get(this.fullUrl);
+        const request = axios.get(this.fullUrl, {
+            headers: {
+                "Cache-Control": "no-cache, no-store, must-revalidate"
+            },
+            params: {
+                format: "json",
+                nocache: true
+            }
+        });
 
         request.then((response) => {
                 console.log({ firstRequest: response });
-                this.categories = response.data.collection.categories;
+                this.categories = this.mapFilters(response.data.collection.categories);
                 this.items = response.data.items;
                 this.pagination = response.data.pagination;
             })
